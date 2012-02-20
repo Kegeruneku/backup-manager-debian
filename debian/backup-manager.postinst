@@ -56,9 +56,22 @@ confsed()
 	 -e 's|BM_BURNING_MAXSIZE=".*"|'"BM_BURNING_MAXSIZE=\"$burning_maxsize\""'|g'
 }
 
+# Set the value of variable $2 (or RET if $2 is missing)
+# to the value of debconf key $1.
+# Note that on read errors we abort to avoid setting a bogus value.
+ 
+db_readkey()
+{
+    db_get $1
+    [ "X$2" = "X" ] || eval $2="\"\$RET\""
+}
 
 action="$1"
 version="$2"
+
+# NOTE: unset shell variables when referenced result in empty string; thus
+# we only need to read-in from debconf those that we will set in the conf
+# file and not initialise the rest.
 
 case "$action" in
 
@@ -75,17 +88,13 @@ case "$action" in
 	fi   
 
 	# The repository stuff
-	db_get backup-manager/backup-repository || true
-	repository="$RET"
-        db_get backup-manager/repo_user || true
-        repo_user="$RET"
-        db_get backup-manager/repo_group || true
-        repo_group="$RET"
+        db_readkey backup-manager/backup-repository repository
+        db_readkey backup-manager/repo_user         repo_user
+        db_readkey backup-manager/repo_group        repo_group
 
 	# first get in debconf which frequency to have
-	db_get backup-manager/cron_frequency || true
-	frequency="$RET"
-	
+        db_readkey backup-manager/cron_frequency    frequency
+
         # find the current cron file
         for freq in daily weekly monthly; do
             if [ -f /etc/cron.$freq/backup-manager ]; then
@@ -122,89 +131,47 @@ case "$action" in
                 [ -f $cronfile ] && rm -f $cronfile
             ;;
         esac
-	
-	db_get backup-manager/filetype || true 
-	filetype="$RET"
 
-	db_get backup-manager/dump_symlinks || true
-	dumpsymlinks="$RET"
-
-	db_get backup-manager/blacklist || true
-	blacklist="$RET"
-
-	db_get backup-manager/name-format || true
-	nameformat="$RET"
-
-	db_get backup-manager/time-to-live || true
-	timetolive="$RET"
-
-	db_get backup-manager/directories || true
-	directories="$RET"
+        db_readkey backup-manager/filetype      filetype
+        db_readkey backup-manager/dump_symlinks dumpsymlinks
+        db_readkey backup-manager/blacklist     blacklist
+        db_readkey backup-manager/name-format   nameformat
+        db_readkey backup-manager/time-to-live  timetolive
+        db_readkey backup-manager/directories   directories
 
     # ecnryption
-    db_get backup-manager/enable_encryption || true
-    encryption="$RET"
-    if [ "$encryption" = "true" ]; then
-        encryption="gpg"
-        db_get backup-manager/encryption_recipient || true
-        gpg_recipient="$RET"
-    fi
+
+        db_readkey backup-manager/enable_encryption encryption
+        if [ "$encryption" = "true" ]; then
+            encryption="gpg"
+            db_readkey backup-manager/encryption_recipient gpg_recipient
+        fi
 
 	# manage the burning option
-	db_get backup-manager/burning-enabled || true
-	if [ "$RET" = "true" ]; then
-	
-		burning="true"
-		burning_media="cdrom"
 
-		db_get backup-manager/burning-device || true
-		burning_device="$RET"
+        db_readkey backup-manager/burning-enabled       burning
+        if [ "$burning" = "true" ]; then
+            burning_media="cdrom"
+            db_readkey backup-manager/burning-device    burning_device
+            db_readkey backup-manager/burning-maxsize   burning_maxsize
+            db_readkey backup-manager/burning-method    burning_method
+        fi
 
-		db_get backup-manager/burning-maxsize || true
-		burning_maxsize="$RET"
-
-		db_get backup-manager/burning-method || true
-		burning_method="$RET"
-
-	else
-		burning="false"
-	fi
-	
 	# manage the uploading system
-	db_get backup-manager/want_to_upload || true
-	if [ "$RET" = "true" ]; then
-			
-		db_get backup-manager/transfert_mode || true
-		transfert_mode="$RET"
-		
-		if [ $transfert_mode = ftp ]; then
-			db_get backup-manager/upload-passwd || true
-			ftp_passwd="$RET"
-			
-			db_get backup-manager/upload-user-ftp || true
-			ftp_user="$RET"
-		else
-			db_get backup-manager/upload-key || true
-			keyfile="$RET"
-			ftp_passwd=""
-			
-			db_get backup-manager/upload-user-scp || true
-			ssh_user="$RET"
-		fi
-	
-		db_get backup-manager/upload-hosts ||  true
-		hosts="$RET"
-			
-		db_get backup-manager/upload-dir || true
-		dir="$RET"
-	else
-		hosts=""
-		ssh_user=""
-        ftp_user=""
-		ftp_passwd=""
-		dir=""
-	fi
-	
+
+        db_readkey backup-manager/want_to_upload
+        if [ "$RET" = "true" ]; then
+            db_readkey backup-manager/upload-hosts      hosts
+            db_readkey backup-manager/upload-dir        dir
+            db_readkey backup-manager/transfert_mode    transfert_mode
+            if [ "$transfert_mode" = "ftp" ]; then
+                db_readkey backup-manager/upload-passwd     ftp_passwd
+                db_readkey backup-manager/upload-user-ftp   ftp_user
+            elif [ "$transfert_mode" = "scp" ]; then
+                db_readkey backup-manager/upload-key        keyfile
+                db_readkey backup-manager/upload-user-scp   ssh_user
+            fi
+        fi
 
 	# register our conffile in ucf
 	ucfr backup-manager $conffile
