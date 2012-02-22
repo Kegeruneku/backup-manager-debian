@@ -59,7 +59,7 @@ confsed()
 # Set the value of variable $2 (or RET if $2 is missing)
 # to the value of debconf key $1.
 # Note that on read errors we abort to avoid setting a bogus value.
- 
+
 db_readkey()
 {
     db_get $1
@@ -77,15 +77,15 @@ case "$action" in
 
     configure|reconfigure)      # see debconf-devel(7) for reconfigure
 
-	# we have to purge the deprecated /etc/cron.d/backup-manager file
-	# Since 0.5.8-3, /etc/cron.d/backup-manager is considered deprecated 
-	# because it's not handled by anacron, whereas cron.daily is. 
-	if [ -e /etc/cron.d/backup-manager ]; then
-		db_get backup-manager/cron_d_remove_deprecated || true
-		if [ "$RET" = "true" ]; then
-			rm -f /etc/cron.d/backup-manager
-		fi
-	fi   
+        # we have to purge the deprecated /etc/cron.d/backup-manager file
+        # Since 0.5.8-3, /etc/cron.d/backup-manager is considered deprecated
+        # because it's not handled by anacron, whereas cron.daily is.
+        if [ -e /etc/cron.d/backup-manager ]; then
+            db_get backup-manager/cron_d_remove_deprecated || true
+            if [ "$RET" = "true" ]; then
+                rm -f /etc/cron.d/backup-manager
+            fi
+	fi
 
 	# The repository stuff
         db_readkey backup-manager/backup-repository repository
@@ -104,16 +104,16 @@ case "$action" in
 
         # if we find a cronfile, use it instead of the template
         if [ -f $cronfile ]; then
-                cronfile_tpl="$cronfile"
+            cronfile_tpl="$cronfile"
         fi
 
         # use our template file if we don't find a cronfile
         if [ ! -f $cronfile_tpl ]; then
-		echo "No template found for the cronfile! ($cronfile_tpl)" >&2
-		exit 5
+            echo "No template found for the cronfile! ($cronfile_tpl)" >&2
+            exit 5
         fi
-	
-	# According to the frequency we have, move the $cronfile found in the 
+
+        # According to the frequency we have, move the $cronfile found in the
         # good CRON sub-directory, or copy our template if none found.
         case $frequency in
             daily|weekly|monthly)
@@ -121,7 +121,7 @@ case "$action" in
                 if [ ! -f $destfile ]; then
                     if [ "$cronfile" = "$cronfile_tpl" ]; then
                         mv $cronfile $destfile
-                    else 
+                    else
                         cp $cronfile_tpl $destfile
                         chmod 755 $destfile
                     fi
@@ -139,7 +139,7 @@ case "$action" in
         db_readkey backup-manager/time-to-live  timetolive
         db_readkey backup-manager/directories   directories
 
-    # ecnryption
+        # ecnryption
 
         db_readkey backup-manager/enable_encryption encryption
         if [ "$encryption" = "true" ]; then
@@ -147,7 +147,7 @@ case "$action" in
             db_readkey backup-manager/encryption_recipient gpg_recipient
         fi
 
-	# manage the burning option
+        # manage the burning option
 
         db_readkey backup-manager/burning-enabled       burning
         if [ "$burning" = "true" ]; then
@@ -157,7 +157,7 @@ case "$action" in
             db_readkey backup-manager/burning-method    burning_method
         fi
 
-	# manage the uploading system
+        # manage the uploading system
 
         db_readkey backup-manager/want_to_upload
         if [ "$RET" = "true" ]; then
@@ -173,19 +173,19 @@ case "$action" in
             fi
         fi
 
-	# register our conffile in ucf
-	ucfr backup-manager $conffile
+        # register our conffile in ucf
+        ucfr backup-manager $conffile
 
-	# now filling the conffile with the good values
-	tmpconf=$(mktemp)
-	confsed < $tplconffile > $tmpconf
-	replace_file $tmpconf $conffile || exit 8
-	rm -f $tmpconf
+        # now filling the conffile with the good values
+        tmpconf=$(mktemp)
+        confsed < $tplconffile > $tmpconf
+        replace_file $tmpconf $conffile || exit 8
+        rm -f $tmpconf
 
-	# fix modes on conf files.
-	chmod 600 $conffile
-	
-	db_stop
+        # fix modes on conf files.
+        chmod 600 $conffile
+
+        db_stop
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
