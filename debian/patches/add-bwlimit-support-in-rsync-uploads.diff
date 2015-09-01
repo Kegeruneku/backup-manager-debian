@@ -1,0 +1,33 @@
+Description: Add bandwidth limiting support in rsync upload
+Author: Matthieu CERDA <matthieu.cerda@normation.com>
+Origin: other
+Last-Update: 2015-09-01
+--- a/backup-manager.conf.tpl
++++ b/backup-manager.conf.tpl
+@@ -467,6 +467,12 @@ export BM_UPLOAD_RSYNC_HOSTS=""
+ # enter true or false (true can lead to huge archives, be careful).    
+ export BM_UPLOAD_RSYNC_DUMPSYMLINKS="false"
+ 
++# Do you want to limit the maximum available bandwidth rsync
++# can use ?
++# By default, no bandwidth limit is applied.
++# Example: 32M, 1024K, ...
++export BM_UPLOAD_RSYNC_BANDWIDTH_LIMIT=""
++
+ ##############################################################
+ # Section "BURNING" 
+ # - Automatic CDR/CDRW/DVDR burning
+--- a/lib/upload-methods.sh
++++ b/lib/upload-methods.sh
+@@ -239,6 +239,11 @@ function bm_upload_rsync_common()
+         done
+     fi
+ 
++    # Apply a bandwidth limit if required
++    if [[ ! -z "$BM_UPLOAD_RSYNC_BANDWIDTH_LIMIT" ]]; then
++        rsync_options="${rsync_options} --bwlimit=${BM_UPLOAD_RSYNC_BANDWIDTH_LIMIT}"
++    fi
++
+     for directory in $BM_UPLOAD_RSYNC_DIRECTORIES
+     do
+         if [[ -n "$bm_upload_hosts" ]]; then

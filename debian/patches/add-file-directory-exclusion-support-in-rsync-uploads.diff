@@ -1,0 +1,35 @@
+Description: Add file / directory exclusion support in rsync upload
+Author: Matthieu CERDA <matthieu.cerda@normation.com>
+Origin: other
+Last-Update: 2015-09-01
+--- a/backup-manager.conf.tpl
++++ b/backup-manager.conf.tpl
+@@ -453,6 +453,10 @@ export BM_UPLOAD_RSYNC_DIRECTORIES=""
+ # Destination for rsync uploads (overrides BM_UPLOAD_DESTINATION) 
+ export BM_UPLOAD_RSYNC_DESTINATION=""
+ 
++# Exclude files/subdirectories from upload
++# Each entry must be separated with a space
++export BM_UPLOAD_RSYNC_EXCLUDE=""
++
+ # The list of remote hosts, if you want to enable the upload
+ # system, just put some remote hosts here (fqdn or IPs)
+ # Leave it empty if you want to use the hosts that are defined in
+--- a/lib/upload-methods.sh
++++ b/lib/upload-methods.sh
+@@ -230,6 +230,15 @@ function bm_upload_rsync_common()
+         fi
+     fi
+ 
++    # For every exclusion defined in the configuration,
++    # append an --exclude condition to the rsync command
++    if [[ ! -z "$BM_UPLOAD_RSYNC_EXCLUDE" ]]; then
++        for exclude in $BM_UPLOAD_RSYNC_EXCLUDE
++        do
++            rsync_options="${rsync_options} --exclude=${exclude}"
++        done
++    fi
++
+     for directory in $BM_UPLOAD_RSYNC_DIRECTORIES
+     do
+         if [[ -n "$bm_upload_hosts" ]]; then

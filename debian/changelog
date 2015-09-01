@@ -1,3 +1,12 @@
+backup-manager (0.7.10.1-3) UNRELEASED; urgency=low
+
+  * Non-maintainer upload.
+  * Added support for ssh port configuration on rsync uploads
+  * Added support file / directory exclusion on rsync uploads
+  * Added support for bandwidth limiting on rsync uploads
+
+ -- Matthieu CERDA <mcerda@normation.com>  Tue, 01 Sep 2015 18:04:20 +0200
+
 backup-manager (0.7.10.1-2) unstable; urgency=medium
 
   * Install the correct cron script (Closes: #672235).

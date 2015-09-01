@@ -14,3 +14,6 @@ fix-pgsql-use-local-sockets.diff
 fix-pgsql-test-all-dump-programs.diff
 fix-sql-archives-naming-convention.diff
 fix-sanitize-messages.diff
+add-ssh-port-in-rsync-uploads.diff
+add-file-directory-exclusion-support-in-rsync-uploads.diff
+add-bwlimit-support-in-rsync-uploads.diff
